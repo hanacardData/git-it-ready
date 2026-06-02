@@ -45,7 +45,7 @@ const initialState: GitState = {
   openPrs: [],
 };
 
-// 💡 Helper to merge file contents line by line
+// Helper to merge file contents line by line
 const combineFileContents = (
   currentContent: string,
   incomingContent: string,
@@ -71,7 +71,35 @@ const combineFileContents = (
 export const useGitSimulator = () => {
   const [state, setState] = useState<GitState>(initialState);
 
-  // 1. git add
+  // git checkout -b [name]
+  const createBranch = useCallback((name: string) => {
+    setState((prev) => ({
+      ...prev,
+      branches: {
+        ...prev.branches,
+        [name]: prev.branches[prev.head] || prev.head,
+      },
+    }));
+  }, []);
+
+  const checkout = useCallback((target: string) => {
+    setState((prev) => {
+      const targetCommitId = prev.branches[target] || target;
+      const targetFiles =
+        prev.fileSystem[targetCommitId] ||
+        prev.fileSystem[INITIAL_COMMIT_ID] ||
+        {};
+
+      return {
+        ...prev,
+        head: target,
+        workingDirectory: { ...targetFiles },
+        stagingArea: [],
+      };
+    });
+  }, []);
+
+  // git add
   const add = useCallback((files: string[]) => {
     setState((prev) => {
       let filesToStage = [...files];
@@ -85,7 +113,7 @@ export const useGitSimulator = () => {
     });
   }, []);
 
-  // 2. git commit
+  // git commit
   const commit = useCallback((message: string) => {
     setState((prev) => {
       const currentCommitId = prev.branches[prev.head] || prev.head;
@@ -122,46 +150,37 @@ export const useGitSimulator = () => {
     });
   }, []);
 
-  // 3. git branch [name]
-  const createBranch = useCallback((name: string) => {
-    setState((prev) => ({
-      ...prev,
-      branches: {
-        ...prev.branches,
-        [name]: prev.branches[prev.head] || prev.head,
-      },
-    }));
-  }, []);
-
-  // 4. git branch -d [name]
-  const deleteBranch = useCallback((name: string) => {
+  // git push
+  const push = useCallback((branchName: string) => {
     setState((prev) => {
-      if (prev.head === name) return prev;
-      const newBranches = { ...prev.branches };
-      delete newBranches[name];
-      return { ...prev, branches: newBranches };
-    });
-  }, []);
+      const branchToPush = branchName || prev.head;
+      const commitId = prev.branches[branchToPush];
 
-  // 5. git checkout [target]
-  const checkout = useCallback((target: string) => {
-    setState((prev) => {
-      const targetCommitId = prev.branches[target] || target;
-      const targetFiles =
-        prev.fileSystem[targetCommitId] ||
-        prev.fileSystem[INITIAL_COMMIT_ID] ||
-        {};
+      if (!commitId) return prev;
 
       return {
         ...prev,
-        head: target,
-        workingDirectory: { ...targetFiles },
-        stagingArea: [],
+        remote: {
+          ...prev.remote,
+          commits: [
+            ...prev.remote.commits,
+            ...prev.commits.filter(
+              (c) => !prev.remote.commits.find((rc) => rc.id === c.id),
+            ),
+          ],
+          branches: {
+            ...prev.remote.branches,
+            [branchToPush]: commitId,
+          },
+          pushedBranches: [
+            ...new Set([...prev.remote.pushedBranches, branchToPush]),
+          ],
+        },
       };
     });
   }, []);
 
-  // 6. git merge [source] - Merge with cumulative line-based content
+  // git merge [source] - Merge with cumulative line-based content
   const merge = useCallback((source: string) => {
     setState((prev) => {
       const targetBranch = prev.head;
@@ -187,7 +206,7 @@ export const useGitSimulator = () => {
         const currentContent = currentFiles[fileName] || "";
         const incomingContent = sourceFiles[fileName] || "";
 
-        // 💡 Combine file contents cumulatively
+        // Combine file contents cumulatively
         mergedFiles[fileName] = combineFileContents(
           currentContent,
           incomingContent,
@@ -218,37 +237,7 @@ export const useGitSimulator = () => {
     });
   }, []);
 
-  // 7. git push
-  const push = useCallback((branchName: string) => {
-    setState((prev) => {
-      const branchToPush = branchName || prev.head;
-      const commitId = prev.branches[branchToPush];
-
-      if (!commitId) return prev;
-
-      return {
-        ...prev,
-        remote: {
-          ...prev.remote,
-          commits: [
-            ...prev.remote.commits,
-            ...prev.commits.filter(
-              (c) => !prev.remote.commits.find((rc) => rc.id === c.id),
-            ),
-          ],
-          branches: {
-            ...prev.remote.branches,
-            [branchToPush]: commitId,
-          },
-          pushedBranches: [
-            ...new Set([...prev.remote.pushedBranches, branchToPush]),
-          ],
-        },
-      };
-    });
-  }, []);
-
-  // 8. GitHub PR
+  // GitHub PR
   const openPullRequest = useCallback((branchName: string) => {
     setState((prev) => ({
       ...prev,
@@ -256,7 +245,7 @@ export const useGitSimulator = () => {
     }));
   }, []);
 
-  // 9. GitHub remote merge - Cumulative content merging
+  // GitHub remote merge - Cumulative content merging
   const mergeRemote = useCallback((source: string, target: string) => {
     setState((prev) => {
       const sourceCommitId = prev.remote.branches[source];
@@ -319,7 +308,7 @@ export const useGitSimulator = () => {
     });
   }, []);
 
-  // 10. 파일 편집 핸들러
+  // Handle file editing
   const updateWorkingDirectory = useCallback(
     (fileName: string, content: string) => {
       setState((prev) => ({
@@ -333,7 +322,7 @@ export const useGitSimulator = () => {
     [],
   );
 
-  // 11. 동기화
+  // Sync branch with remote commit
   const syncBranch = useCallback((branchName: string, commitId: string) => {
     setState((prev) => {
       const files = prev.fileSystem[commitId];
@@ -357,7 +346,6 @@ export const useGitSimulator = () => {
     add,
     commit,
     createBranch,
-    deleteBranch,
     checkout,
     merge,
     push,

@@ -12,7 +12,6 @@ function App() {
     add,
     commit,
     createBranch,
-    deleteBranch,
     checkout,
     merge,
     push,
@@ -56,28 +55,6 @@ function App() {
           setTerminalOutput((prev) => [
             ...prev,
             `error: pathspec '${target}' did not match any file(s) known to git`,
-          ]);
-        }
-      } else if (
-        cmd.startsWith("git branch -d ") ||
-        cmd.startsWith("git branch -D ")
-      ) {
-        const branchName = parts[3];
-        if (state.head === branchName) {
-          setTerminalOutput((prev) => [
-            ...prev,
-            `error: Cannot delete branch '${branchName}' checked out at '...'`,
-          ]);
-        } else if (state.branches[branchName]) {
-          deleteBranch(branchName);
-          setTerminalOutput((prev) => [
-            ...prev,
-            `Deleted branch ${branchName}`,
-          ]);
-        } else {
-          setTerminalOutput((prev) => [
-            ...prev,
-            `error: branch '${branchName}' not found.`,
           ]);
         }
       } else if (cmd.startsWith("git add ")) {
@@ -220,17 +197,7 @@ function App() {
         setTerminalOutput((prev) => [...prev, `Unknown command: ${cmd}`]);
       }
     },
-    [
-      state,
-      add,
-      commit,
-      createBranch,
-      deleteBranch,
-      checkout,
-      merge,
-      push,
-      syncBranch,
-    ],
+    [state, add, commit, createBranch, checkout, merge, push, syncBranch],
   );
 
   return (
@@ -283,72 +250,154 @@ function App() {
       >
         <div
           style={{
-            marginBottom: "10px",
+            marginBottom: "12px",
             fontWeight: "bold",
             color: "#58a6ff",
-            fontSize: "14px",
+            fontSize: "18px",
             display: "flex",
             alignItems: "center",
-            gap: "8px",
+            gap: "10px",
           }}
         >
-          <svg width="16" height="16" fill="currentColor">
-            <use xlinkHref="/icons.svg#icon-github" />
+          <svg width="20" height="20" fill="currentColor">
+            <use
+              xlinkHref={`${import.meta.env.BASE_URL}icons.svg#icon-github`}
+            />
           </svg>
-          Git Workflow Guide:
+          Git Workflow Guide
         </div>
         <div
           style={{
             display: "flex",
-            gap: "20px",
-            fontSize: "12px",
+            gap: "24px",
+            fontSize: "13px",
             flexWrap: "wrap",
           }}
         >
-          <div style={{ flex: "1", minWidth: "200px" }}>
-            <strong style={{ color: "#79c0ff" }}>1. Branching</strong>
-            <div style={{ marginTop: "4px", color: "#8b949e" }}>
+          <div style={{ flex: "1", minWidth: "220px" }}>
+            <strong style={{ color: "#79c0ff", fontSize: "14px" }}>
+              1. Branching
+            </strong>
+            <div
+              style={{ marginTop: "6px", color: "#8b949e", lineHeight: "1.5" }}
+            >
               Create and switch to a new branch:
               <br />
-              <code>git checkout -b feature-name</code>
+              <code
+                style={{
+                  fontSize: "13px",
+                  backgroundColor: "#0d1117",
+                  padding: "2px 4px",
+                  borderRadius: "4px",
+                }}
+              >
+                git checkout -b feature-name
+              </code>
             </div>
           </div>
-          <div style={{ flex: "1", minWidth: "200px" }}>
-            <strong style={{ color: "#79c0ff" }}>2. Staging</strong>
-            <div style={{ marginTop: "4px", color: "#8b949e" }}>
+          <div style={{ flex: "1", minWidth: "220px" }}>
+            <strong style={{ color: "#79c0ff", fontSize: "14px" }}>
+              2. Staging
+            </strong>
+            <div
+              style={{ marginTop: "6px", color: "#8b949e", lineHeight: "1.5" }}
+            >
               Stage specific file or all changes:
               <br />
-              <code>git add README.md</code> or <code>git add .</code>
+              <code
+                style={{
+                  fontSize: "13px",
+                  backgroundColor: "#0d1117",
+                  padding: "2px 4px",
+                  borderRadius: "4px",
+                }}
+              >
+                git add README.md
+              </code>{" "}
+              or{" "}
+              <code
+                style={{
+                  fontSize: "13px",
+                  backgroundColor: "#0d1117",
+                  padding: "2px 4px",
+                  borderRadius: "4px",
+                }}
+              >
+                git add .
+              </code>
             </div>
           </div>
-          <div style={{ flex: "1", minWidth: "200px" }}>
-            <strong style={{ color: "#79c0ff" }}>3. Committing</strong>
-            <div style={{ marginTop: "4px", color: "#8b949e" }}>
+          <div style={{ flex: "1", minWidth: "220px" }}>
+            <strong style={{ color: "#79c0ff", fontSize: "14px" }}>
+              3. Committing
+            </strong>
+            <div
+              style={{ marginTop: "6px", color: "#8b949e", lineHeight: "1.5" }}
+            >
               Save your staged changes:
               <br />
-              <code>git commit -m "your message"</code>
+              <code
+                style={{
+                  fontSize: "13px",
+                  backgroundColor: "#0d1117",
+                  padding: "2px 4px",
+                  borderRadius: "4px",
+                }}
+              >
+                git commit -m "message"
+              </code>
             </div>
           </div>
-          <div style={{ flex: "1", minWidth: "200px" }}>
-            <strong style={{ color: "#79c0ff" }}>4. Pushing</strong>
-            <div style={{ marginTop: "4px", color: "#8b949e" }}>
+          <div style={{ flex: "1", minWidth: "220px" }}>
+            <strong style={{ color: "#79c0ff", fontSize: "14px" }}>
+              4. Pushing
+            </strong>
+            <div
+              style={{ marginTop: "6px", color: "#8b949e", lineHeight: "1.5" }}
+            >
               Upload to remote repository:
               <br />
-              <code>git push origin branch-name</code>
+              <code
+                style={{
+                  fontSize: "13px",
+                  backgroundColor: "#0d1117",
+                  padding: "2px 4px",
+                  borderRadius: "4px",
+                }}
+              >
+                git push origin branch-name
+              </code>
             </div>
           </div>
-          <div style={{ flex: "1", minWidth: "200px" }}>
-            <strong style={{ color: "#79c0ff" }}>5. PR & Merge</strong>
-            <div style={{ marginTop: "4px", color: "#8b949e" }}>
+          <div style={{ flex: "1", minWidth: "220px" }}>
+            <strong style={{ color: "#79c0ff", fontSize: "14px" }}>
+              5. PR & Merge
+            </strong>
+            <div
+              style={{ marginTop: "6px", color: "#8b949e", lineHeight: "1.5" }}
+            >
               Open PR in GitHub tab and merge into main.
             </div>
           </div>
-          <div style={{ flex: "1", minWidth: "200px" }}>
-            <strong style={{ color: "#79c0ff" }}>6. Pulling</strong>
-            <div style={{ marginTop: "4px", color: "#8b949e" }}>
+          <div style={{ flex: "1", minWidth: "220px" }}>
+            <strong style={{ color: "#79c0ff", fontSize: "14px" }}>
+              6. Pulling
+            </strong>
+            <div
+              style={{ marginTop: "6px", color: "#8b949e", lineHeight: "1.5" }}
+            >
               Update local with remote changes:
               <br />
-              <code>git pull origin main</code>
+              <code
+                style={{
+                  fontSize: "13px",
+                  backgroundColor: "#0d1117",
+                  padding: "2px 4px",
+                  borderRadius: "4px",
+                }}
+              >
+                git pull origin main
+              </code>
             </div>
           </div>
         </div>
