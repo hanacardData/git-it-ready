@@ -66,6 +66,12 @@ const VisualGraph: React.FC<VisualGraphProps> = ({ state }) => {
     return commitPositions;
   }, [commits, branches]);
 
+  // Determine the actual vertical extent of the graph to set SVG height accurately
+  const maxDepth = useMemo(() => {
+    const depths = Object.values(positions).map((p) => (p.y - 120) / 90);
+    return depths.length > 0 ? Math.max(...depths) : 0;
+  }, [positions]);
+
   return (
     <div
       style={{
@@ -75,7 +81,7 @@ const VisualGraph: React.FC<VisualGraphProps> = ({ state }) => {
         backgroundColor: "#0d1117",
       }}
     >
-      <svg width="100%" height={commits.length * 90 + 250}>
+      <svg width="100%" height={maxDepth * 90 + 350}>
         {/* Legend Guide showing what colors represent */}
         <g transform="translate(20, 30)">
           <rect width="10" height="10" fill="#1f6feb" rx="2" />

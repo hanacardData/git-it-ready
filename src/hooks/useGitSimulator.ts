@@ -83,8 +83,9 @@ const initialState: GitState = {
 };
 
 /**
- * Helper to merge file contents line by line.
- * Mimics a simple Git merge strategy by accumulating unique lines.
+ * Helper to merge file contents using an index-based mapping strategy.
+ * Each line is mapped to its index (0, 1, 2...). Incoming lines overwrite
+ * current lines at the same index, following the "latter basis" rule.
  */
 const combineFileContents = (
   currentContent: string,
@@ -97,14 +98,29 @@ const combineFileContents = (
   const currentLines = currentContent.split("\n");
   const incomingLines = incomingContent.split("\n");
 
-  const mergedLines = [...currentLines];
-  incomingLines.forEach((line) => {
-    if (!mergedLines.includes(line)) {
-      mergedLines.push(line);
-    }
-  });
+  // The result will have at least as many lines as the longer file
+  const maxLength = Math.max(currentLines.length, incomingLines.length);
+  const result: string[] = [];
 
-  return mergedLines.join("\n");
+  for (let i = 0; i < maxLength; i++) {
+    const cur = currentLines[i];
+    const inc = incomingLines[i];
+
+    // Priority 1: If the incoming line has actual content, it overwrites the current line (Latter basis)
+    if (inc !== undefined && inc.trim() !== "") {
+      result.push(inc);
+    }
+    // Priority 2: If the incoming line is empty or doesn't exist, we keep the current content
+    else if (cur !== undefined) {
+      result.push(cur);
+    }
+    // Priority 3: If both are undefined or empty, we keep an empty line
+    else {
+      result.push("");
+    }
+  }
+
+  return result.join("\n");
 };
 
 export const useGitSimulator = () => {
