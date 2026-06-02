@@ -23,8 +23,10 @@ function App() {
   } = useGitSimulator();
 
   const [terminalOutput, setTerminalOutput] = useState<string[]>([
-    "Welcome to the Git Tutorial!",
-    "Type commands to begin.",
+    "Welcome to the Git Interactive Tutorial!",
+    "---------------------------------------",
+    "Follow the guide above to start your workflow.",
+    "Try creating a branch first: git checkout -b feature-1",
   ]);
   const [activeTab, setActiveTab] = useState<"local" | "github">("local");
 
@@ -273,17 +275,77 @@ function App() {
 
       <div
         style={{
-          padding: "10px 20px",
+          padding: "15px 20px",
           backgroundColor: "#161b22",
           borderBottom: "1px solid #30363d",
           color: "#e6edf3",
-          fontSize: "14px",
         }}
       >
-        <strong>Tip:</strong> Feel free to practice Git commands! Try creating a
-        branch (<code>git checkout -b</code>), editing files, committing (
-        <code>git add</code>, <code>git commit</code>), and pushing to see the
-        graph change.
+        <div
+          style={{
+            marginBottom: "10px",
+            fontWeight: "bold",
+            color: "#58a6ff",
+            fontSize: "14px",
+          }}
+        >
+          🚀 Git Workflow Guide:
+        </div>
+        <div
+          style={{
+            display: "flex",
+            gap: "20px",
+            fontSize: "12px",
+            flexWrap: "wrap",
+          }}
+        >
+          <div style={{ flex: "1", minWidth: "200px" }}>
+            <strong style={{ color: "#79c0ff" }}>1. Branching</strong>
+            <div style={{ marginTop: "4px", color: "#8b949e" }}>
+              Create and switch to a new branch:
+              <br />
+              <code>git checkout -b feature-name</code>
+            </div>
+          </div>
+          <div style={{ flex: "1", minWidth: "200px" }}>
+            <strong style={{ color: "#79c0ff" }}>2. Staging</strong>
+            <div style={{ marginTop: "4px", color: "#8b949e" }}>
+              Stage specific file or all changes:
+              <br />
+              <code>git add README.md</code> or <code>git add .</code>
+            </div>
+          </div>
+          <div style={{ flex: "1", minWidth: "200px" }}>
+            <strong style={{ color: "#79c0ff" }}>3. Committing</strong>
+            <div style={{ marginTop: "4px", color: "#8b949e" }}>
+              Save your staged changes:
+              <br />
+              <code>git commit -m "your message"</code>
+            </div>
+          </div>
+          <div style={{ flex: "1", minWidth: "200px" }}>
+            <strong style={{ color: "#79c0ff" }}>4. Pushing</strong>
+            <div style={{ marginTop: "4px", color: "#8b949e" }}>
+              Upload to remote repository:
+              <br />
+              <code>git push origin branch-name</code>
+            </div>
+          </div>
+          <div style={{ flex: "1", minWidth: "200px" }}>
+            <strong style={{ color: "#79c0ff" }}>5. PR & Merge</strong>
+            <div style={{ marginTop: "4px", color: "#8b949e" }}>
+              Open PR in GitHub tab and merge into main.
+            </div>
+          </div>
+          <div style={{ flex: "1", minWidth: "200px" }}>
+            <strong style={{ color: "#79c0ff" }}>6. Pulling</strong>
+            <div style={{ marginTop: "4px", color: "#8b949e" }}>
+              Update local with remote changes:
+              <br />
+              <code>git pull origin main</code>
+            </div>
+          </div>
+        </div>
       </div>
 
       <main className="main-content">
