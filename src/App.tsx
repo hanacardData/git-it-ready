@@ -287,9 +287,15 @@ function App() {
             fontWeight: "bold",
             color: "#58a6ff",
             fontSize: "14px",
+            display: "flex",
+            alignItems: "center",
+            gap: "8px",
           }}
         >
-          🚀 Git Workflow Guide:
+          <svg width="16" height="16" fill="currentColor">
+            <use xlinkHref="/icons.svg#icon-github" />
+          </svg>
+          Git Workflow Guide:
         </div>
         <div
           style={{
