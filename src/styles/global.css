@@ -1,0 +1,75 @@
+:root {
+    --bg-color: #0d1117;
+    --text-color: #c9d1d9;
+    --border-color: #30363d;
+    --sidebar-bg: #161b22;
+    --header-bg: #010409;
+    --accent-color: #238636;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
+        sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    height: 100vh;
+    overflow: hidden;
+}
+
+#root {
+    height: 100%;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+}
+
+.header {
+    background-color: var(--header-bg);
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.main-content {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+}
+
+.left-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-color);
+    background-color: var(--sidebar-bg);
+}
+
+.right-panel {
+    flex: 1;
+    background-color: var(--bg-color);
+    overflow: auto;
+    position: relative;
+}
+
+.terminal-container {
+    height: 40%;
+    border-top: 1px solid var(--border-color);
+    background-color: #000;
+}
+
+.editor-container {
+    flex: 1;
+    overflow: auto;
+}
