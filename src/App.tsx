@@ -1,3 +1,8 @@
+/**
+ * App.tsx
+ * Main application component.
+ * Orchestrates the Git simulator, terminal commands, and UI layout.
+ */
 import { useState, useCallback } from "react";
 import "./styles/global.css";
 import { useGitSimulator } from "./hooks/useGitSimulator";
@@ -7,6 +12,7 @@ import Editor from "./components/Editor";
 import GitHubUI from "./components/GitHubUI";
 
 function App() {
+  // Initialize Git simulator hook with all necessary Git actions
   const {
     state,
     add,
@@ -21,29 +27,49 @@ function App() {
     syncBranch,
   } = useGitSimulator();
 
+  // State for terminal command history and interactive feedback
   const [terminalOutput, setTerminalOutput] = useState<string[]>([
     "Welcome to the Git Interactive Tutorial!",
     "---------------------------------------",
     "Follow the guide above to start your workflow.",
     "Try creating a branch first: git checkout -b feature-1",
   ]);
+
+  // State for switching between Local (Editor/Terminal) and GitHub (PR/Merge) views
   const [activeTab, setActiveTab] = useState<"local" | "github">("local");
 
+  /**
+   * Main command handler for the simulated terminal.
+   * Parses string input and triggers the corresponding Git action in the simulator.
+   */
   const handleCommand = useCallback(
     (cmd: string) => {
+      // Echo the command in the terminal
       setTerminalOutput((prev) => [...prev, `$ ${cmd}`]);
 
       const parts = cmd.split(" ").filter((p) => p !== "");
 
+      // git checkout -b [branch-name]
       if (cmd.startsWith("git checkout -b ")) {
         const branchName = parts[3];
+        // Validate branch name before proceeding (security check for prototype pollution)
+        const FORBIDDEN = ["__proto__", "constructor", "prototype"];
+        if (FORBIDDEN.includes(branchName)) {
+          setTerminalOutput((prev) => [
+            ...prev,
+            `fatal: '${branchName}' is not a valid branch name.`,
+          ]);
+          return;
+        }
         createBranch(branchName);
         checkout(branchName);
         setTerminalOutput((prev) => [
           ...prev,
           `Created and switched to a new branch '${branchName}'`,
         ]);
-      } else if (cmd.startsWith("git checkout ")) {
+      }
+      // git checkout [branch-or-commit]
+      else if (cmd.startsWith("git checkout ")) {
         const target = parts[2];
         if (
           state.branches[target] ||
@@ -57,12 +83,14 @@ function App() {
             `error: pathspec '${target}' did not match any file(s) known to git`,
           ]);
         }
-      } else if (cmd.startsWith("git add ")) {
+      }
+      // git add [files] (supports 'git add .' and specific file names)
+      else if (cmd.startsWith("git add ")) {
         const files = parts.slice(2);
-        // Check if there are changes to add
         const currentCommitId = state.branches[state.head];
         const lastCommitFiles = state.fileSystem[currentCommitId] || {};
 
+        // Check if there are actually any changes to stage
         const hasUnstagedChanges = Object.keys(state.workingDirectory).some(
           (f) => state.workingDirectory[f] !== lastCommitFiles[f],
         );
@@ -77,7 +105,9 @@ function App() {
             `Staged ${displayFiles} files.`,
           ]);
         }
-      } else if (cmd.startsWith("git commit -m ")) {
+      }
+      // git commit -m "your message"
+      else if (cmd.startsWith("git commit -m ")) {
         if (state.stagingArea.length === 0) {
           setTerminalOutput((prev) => [
             ...prev,
@@ -91,7 +121,9 @@ function App() {
             `[${state.head}] commit: ${message}`,
           ]);
         }
-      } else if (cmd.startsWith("git push origin ")) {
+      }
+      // git push origin [branch]
+      else if (cmd.startsWith("git push origin ")) {
         const branchName = parts[3];
         const localCommitId = state.branches[branchName];
         const remoteCommitId = state.remote.branches[branchName];
@@ -106,7 +138,9 @@ function App() {
             `Next: You can now create a Pull Request in the [GitHub] tab.`,
           ]);
         }
-      } else if (cmd === "git push") {
+      }
+      // git push (automatically targets the current branch)
+      else if (cmd === "git push") {
         const branchName = state.head;
         const remoteCommitId = state.remote.branches[branchName];
 
@@ -132,7 +166,9 @@ function App() {
             ]);
           }
         }
-      } else if (cmd === "git pull origin main") {
+      }
+      // git pull origin main
+      else if (cmd === "git pull origin main") {
         const remoteMainId = state.remote.branches["main"];
         const localMainId = state.branches["main"];
 
@@ -146,7 +182,9 @@ function App() {
             `* pull: Fetches and merges remote changes into your local branch.`,
           ]);
         }
-      } else if (cmd === "git pull") {
+      }
+      // git pull (automatically targets the current branch)
+      else if (cmd === "git pull") {
         const branchName = state.head;
         const remoteCommitId = state.remote.branches[branchName];
         const localCommitId = state.branches[branchName];
@@ -169,7 +207,9 @@ function App() {
             `Updated local '${branchName}' with remote changes from origin.`,
           ]);
         }
-      } else if (cmd.startsWith("git merge ")) {
+      }
+      // git merge [source-branch]
+      else if (cmd.startsWith("git merge ")) {
         const source = parts[2];
         if (state.branches[source]) {
           merge(source);
@@ -183,7 +223,9 @@ function App() {
             `error: '${source}' - not something we can merge`,
           ]);
         }
-      } else if (cmd === "git status") {
+      }
+      // git status
+      else if (cmd === "git status") {
         setTerminalOutput((prev) => [
           ...prev,
           `On branch ${state.head}`,
@@ -191,7 +233,9 @@ function App() {
             ? `Changes to be committed: ${state.stagingArea.join(", ")}`
             : "nothing to commit, working tree clean",
         ]);
-      } else if (cmd === "clear") {
+      }
+      // terminal clear (clears output history)
+      else if (cmd === "clear") {
         setTerminalOutput([]);
       } else {
         setTerminalOutput((prev) => [...prev, `Unknown command: ${cmd}`]);
@@ -202,6 +246,7 @@ function App() {
 
   return (
     <div className="app-container">
+      {/* App Header with Tab Navigation */}
       <header className="header" style={{ justifyContent: "space-between" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
           <h1 style={{ margin: 0, fontSize: "20px" }}>
@@ -240,6 +285,7 @@ function App() {
         </div>
       </header>
 
+      {/* Visual Workflow Guide for Git Basics */}
       <div
         style={{
           padding: "15px 20px",
@@ -407,6 +453,7 @@ function App() {
         <section className="left-panel">
           {activeTab === "local" ? (
             <>
+              {/* Local Development Workspace */}
               <div className="editor-container">
                 <Editor
                   fileName="README.md"
@@ -421,6 +468,7 @@ function App() {
               </div>
             </>
           ) : (
+            /* Simulated GitHub Online Platform */
             <GitHubUI
               state={state}
               onPrCreate={(branchName) => openPullRequest(branchName)}
@@ -434,6 +482,8 @@ function App() {
             />
           )}
         </section>
+
+        {/* Right Panel for Visualizing Git History */}
         <section className="right-panel">
           <div
             style={{

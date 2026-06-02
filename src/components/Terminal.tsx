@@ -1,17 +1,22 @@
+/**
+ * Terminal.tsx
+ * A simulated terminal component for entering Git commands and viewing output.
+ */
 import React, { useState, useRef, useEffect } from "react";
 
 interface TerminalProps {
-  onCommand: (command: string) => void;
-  output: string[];
+  onCommand: (command: string) => void; // Callback to handle executed commands
+  output: string[]; // List of lines to display in the terminal
 }
 
 const Terminal: React.FC<TerminalProps> = ({ onCommand, output }) => {
-  const [input, setInput] = useState("");
-  const [history, setHistory] = useState<string[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [input, setInput] = useState(""); // Current input field value
+  const [history, setHistory] = useState<string[]>([]); // Command history for arrow key navigation
+  const [historyIndex, setHistoryIndex] = useState(-1); // Current position in history
   const inputRef = useRef<HTMLInputElement>(null);
   const outputEndRef = useRef<HTMLDivElement>(null);
 
+  // Auto-scroll to the bottom when new output arrives
   const scrollToBottom = () => {
     outputEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -20,7 +25,8 @@ const Terminal: React.FC<TerminalProps> = ({ onCommand, output }) => {
     scrollToBottom();
   }, [output]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Handle command submission
+  const handleSubmit = (e: React.SubmitEvent) => {
     e.preventDefault();
     if (input.trim()) {
       onCommand(input.trim());
@@ -30,6 +36,7 @@ const Terminal: React.FC<TerminalProps> = ({ onCommand, output }) => {
     }
   };
 
+  // Handle arrow key navigation through history
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "ArrowUp") {
       e.preventDefault();

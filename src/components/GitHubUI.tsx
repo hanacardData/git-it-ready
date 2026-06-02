@@ -1,16 +1,20 @@
+/**
+ * GitHubUI.tsx
+ * A simulated GitHub web interface for managing Pull Requests and merging on origin.
+ */
 import React from "react";
 import type { GitState } from "../types/git";
 
 interface GitHubUIProps {
-  state: GitState;
-  onPrCreate: (branchName: string) => void;
-  onMerge: (branchName: string) => void;
+  state: GitState; // Current simulated Git state
+  onPrCreate: (branchName: string) => void; // Triggered when "Compare & pull request" is clicked
+  onMerge: (branchName: string) => void; // Triggered when "Merge Pull Request" is clicked
 }
 
 const GitHubUI: React.FC<GitHubUIProps> = ({ state, onPrCreate, onMerge }) => {
   const { remote, openPrs } = state;
 
-  // Branches that are pushed but don't have an open PR yet
+  // Filter branches that have been pushed to origin but don't have an open PR yet
   const pushBranchesWithoutPr = remote.pushedBranches.filter(
     (b) => b !== "main" && !openPrs.includes(b),
   );
@@ -25,7 +29,7 @@ const GitHubUI: React.FC<GitHubUIProps> = ({ state, onPrCreate, onMerge }) => {
         overflowY: "auto",
       }}
     >
-      {/* Create PR Section */}
+      {/* "Compare & pull request" banner section for recently pushed branches */}
       {pushBranchesWithoutPr.length > 0 && (
         <div style={{ marginBottom: "30px" }}>
           <h3
@@ -68,7 +72,7 @@ const GitHubUI: React.FC<GitHubUIProps> = ({ state, onPrCreate, onMerge }) => {
         </div>
       )}
 
-      {/* Pull Requests List */}
+      {/* List of open Pull Requests */}
       <h3 style={{ borderBottom: "1px solid #30363d", paddingBottom: "10px" }}>
         Pull Requests
       </h3>
@@ -80,6 +84,7 @@ const GitHubUI: React.FC<GitHubUIProps> = ({ state, onPrCreate, onMerge }) => {
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
           {openPrs.map((branch) => {
+            // Check if the PR branch has already been merged into remote main
             const isMerged =
               remote.branches["main"] === remote.branches[branch];
 

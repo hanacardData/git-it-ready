@@ -1,9 +1,46 @@
+/**
+ * useGitSimulator.ts
+ * Core logic for the Git simulation.
+ * Manages repository state, staging area, commits, branching, and remote synchronization.
+ */
 import { useState, useCallback } from "react";
 import type { Commit, GitState } from "../types/git";
 
-const INITIAL_COMMIT_ID = "root-commit";
 const INITIAL_CONTENT = "# Git-it-ready";
 
+/**
+ * List of forbidden names to prevent Prototype Pollution or internal object corruption.
+ */
+const FORBIDDEN_NAMES = [
+  "__proto__",
+  "constructor",
+  "prototype",
+  "toString",
+  "valueOf",
+];
+
+/**
+ * Validates if a name (branch or file) is safe to use as an object key.
+ */
+const isValidName = (name: string): boolean => {
+  return !!name && !FORBIDDEN_NAMES.includes(name);
+};
+
+/**
+ * Helper to generate a unique 7-character commit ID.
+ * Ensures no collisions within the current history.
+ */
+const generateUniqueId = (commits: Commit[]): string => {
+  const existingIds = new Set(commits.map((c) => c.id));
+  let newId: string;
+  do {
+    newId = Math.random().toString(36).substring(2, 9);
+  } while (existingIds.has(newId));
+  return newId;
+};
+
+// Initial state for a fresh repository with one "Initial commit"
+const INITIAL_COMMIT_ID = Math.random().toString(36).substring(2, 9);
 const initialState: GitState = {
   commits: [
     {
@@ -45,7 +82,10 @@ const initialState: GitState = {
   openPrs: [],
 };
 
-// Helper to merge file contents line by line
+/**
+ * Helper to merge file contents line by line.
+ * Mimics a simple Git merge strategy by accumulating unique lines.
+ */
 const combineFileContents = (
   currentContent: string,
   incomingContent: string,
@@ -57,7 +97,6 @@ const combineFileContents = (
   const currentLines = currentContent.split("\n");
   const incomingLines = incomingContent.split("\n");
 
-  // Accumulate unique lines from incoming content
   const mergedLines = [...currentLines];
   incomingLines.forEach((line) => {
     if (!mergedLines.includes(line)) {
@@ -71,8 +110,13 @@ const combineFileContents = (
 export const useGitSimulator = () => {
   const [state, setState] = useState<GitState>(initialState);
 
-  // git checkout -b [name]
+  /**
+   * git branch [name]
+   * Creates a new branch pointing to the current HEAD.
+   * Includes validation to prevent unsafe names.
+   */
   const createBranch = useCallback((name: string) => {
+    if (!isValidName(name)) return;
     setState((prev) => ({
       ...prev,
       branches: {
@@ -82,6 +126,10 @@ export const useGitSimulator = () => {
     }));
   }, []);
 
+  /**
+   * git checkout [target]
+   * Switches HEAD to a branch or commit ID and updates the working directory.
+   */
   const checkout = useCallback((target: string) => {
     setState((prev) => {
       const targetCommitId = prev.branches[target] || target;
@@ -99,7 +147,10 @@ export const useGitSimulator = () => {
     });
   }, []);
 
-  // git add
+  /**
+   * git add [files]
+   * Moves changes from the working directory to the staging area.
+   */
   const add = useCallback((files: string[]) => {
     setState((prev) => {
       let filesToStage = [...files];
@@ -113,11 +164,14 @@ export const useGitSimulator = () => {
     });
   }, []);
 
-  // git commit
+  /**
+   * git commit -m [message]
+   * Creates a new commit with the current staged changes.
+   */
   const commit = useCallback((message: string) => {
     setState((prev) => {
       const currentCommitId = prev.branches[prev.head] || prev.head;
-      const newCommitId = Math.random().toString(36).substring(2, 9);
+      const newCommitId = generateUniqueId(prev.commits);
 
       const newCommit: Commit = {
         id: newCommitId,
@@ -150,7 +204,10 @@ export const useGitSimulator = () => {
     });
   }, []);
 
-  // git push
+  /**
+   * git push
+   * Syncs local commits and branch head to the remote repository.
+   */
   const push = useCallback((branchName: string) => {
     setState((prev) => {
       const branchToPush = branchName || prev.head;
@@ -180,7 +237,10 @@ export const useGitSimulator = () => {
     });
   }, []);
 
-  // git merge [source] - Merge with cumulative line-based content
+  /**
+   * git merge [source]
+   * Merges changes from the source branch into the current HEAD using a cumulative line-based strategy.
+   */
   const merge = useCallback((source: string) => {
     setState((prev) => {
       const targetBranch = prev.head;
@@ -190,9 +250,8 @@ export const useGitSimulator = () => {
       if (!sourceCommitId || !targetCommitId || source === targetBranch)
         return prev;
 
-      const newCommitId = Math.random().toString(36).substring(2, 9);
+      const newCommitId = generateUniqueId(prev.commits);
 
-      // Current workspace state
       const currentFiles = { ...prev.workingDirectory };
       const sourceFiles = prev.fileSystem[sourceCommitId] || {};
 
@@ -206,7 +265,6 @@ export const useGitSimulator = () => {
         const currentContent = currentFiles[fileName] || "";
         const incomingContent = sourceFiles[fileName] || "";
 
-        // Combine file contents cumulatively
         mergedFiles[fileName] = combineFileContents(
           currentContent,
           incomingContent,
@@ -237,7 +295,10 @@ export const useGitSimulator = () => {
     });
   }, []);
 
-  // GitHub PR
+  /**
+   * GitHub: Compare & pull request
+   * Marks a branch as having an open Pull Request on the remote.
+   */
   const openPullRequest = useCallback((branchName: string) => {
     setState((prev) => ({
       ...prev,
@@ -245,14 +306,17 @@ export const useGitSimulator = () => {
     }));
   }, []);
 
-  // GitHub remote merge - Cumulative content merging
+  /**
+   * GitHub: Merge Pull Request
+   * Merges the PR branch into main on the remote repository.
+   */
   const mergeRemote = useCallback((source: string, target: string) => {
     setState((prev) => {
       const sourceCommitId = prev.remote.branches[source];
       const targetCommitId = prev.remote.branches[target];
       if (!sourceCommitId || !targetCommitId) return prev;
 
-      const newCommitId = Math.random().toString(36).substring(2, 9);
+      const newCommitId = generateUniqueId(prev.commits);
 
       const currentRemoteFiles = prev.fileSystem[targetCommitId] || {};
       const sourceFiles = prev.fileSystem[sourceCommitId] || {};
@@ -270,7 +334,6 @@ export const useGitSimulator = () => {
         const currentContent = currentRemoteFiles[fileName] || "";
         const incomingContent = sourceFiles[fileName] || "";
 
-        // 💡 Combine file contents for remote merge
         mergedFiles[fileName] = combineFileContents(
           currentContent,
           incomingContent,
@@ -308,9 +371,14 @@ export const useGitSimulator = () => {
     });
   }, []);
 
-  // Handle file editing
+  /**
+   * Local file editing
+   * Updates the content of a file in the simulated working directory.
+   * Includes validation to prevent unsafe file names.
+   */
   const updateWorkingDirectory = useCallback(
     (fileName: string, content: string) => {
+      if (!isValidName(fileName)) return;
       setState((prev) => ({
         ...prev,
         workingDirectory: {
@@ -322,7 +390,10 @@ export const useGitSimulator = () => {
     [],
   );
 
-  // Sync branch with remote commit
+  /**
+   * git pull
+   * Updates the local branch head and working directory with remote changes.
+   */
   const syncBranch = useCallback((branchName: string, commitId: string) => {
     setState((prev) => {
       const files = prev.fileSystem[commitId];

@@ -1,9 +1,13 @@
+/**
+ * Editor.tsx
+ * A simple text editor component for modifying file contents in the simulated working directory.
+ */
 import React from "react";
 
 interface EditorProps {
-  fileName: string;
-  content: string;
-  onChange: (content: string) => void;
+  fileName: string; // Name of the file being edited
+  content: string; // Current content of the file
+  onChange: (content: string) => void; // Callback when content changes
 }
 
 const Editor: React.FC<EditorProps> = ({ fileName, content, onChange }) => {

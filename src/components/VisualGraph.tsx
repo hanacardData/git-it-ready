@@ -1,8 +1,13 @@
+/**
+ * VisualGraph.tsx
+ * Renders a visual representation of the Git history using SVG.
+ * Calculates node positions based on branch lanes and commit depth.
+ */
 import React, { useMemo } from "react";
 import type { GitState } from "../types/git";
 
 interface VisualGraphProps {
-  state: GitState;
+  state: GitState; // Entire Git state to visualize
 }
 
 const VisualGraph: React.FC<VisualGraphProps> = ({ state }) => {
@@ -71,7 +76,7 @@ const VisualGraph: React.FC<VisualGraphProps> = ({ state }) => {
       }}
     >
       <svg width="100%" height={commits.length * 90 + 250}>
-        {/* Legend Guide */}
+        {/* Legend Guide showing what colors represent */}
         <g transform="translate(20, 30)">
           <rect width="10" height="10" fill="#1f6feb" rx="2" />
           <text x="15" y="10" fill="#8b949e" fontSize="11">
@@ -97,7 +102,7 @@ const VisualGraph: React.FC<VisualGraphProps> = ({ state }) => {
           </text>
         </g>
 
-        {/* Git edge rendering */}
+        {/* Git edge rendering (lines between commits) */}
         {commits.map((commit) => {
           return commit.parents.map((parentId, pIdx) => {
             const start = positions[parentId];
@@ -119,7 +124,7 @@ const VisualGraph: React.FC<VisualGraphProps> = ({ state }) => {
           });
         })}
 
-        {/* Git node, text, and label rendering */}
+        {/* Git node, text, and label rendering (circles and branch names) */}
         {commits.map((commit) => {
           const pos = positions[commit.id];
           if (!pos) return null;
@@ -136,7 +141,7 @@ const VisualGraph: React.FC<VisualGraphProps> = ({ state }) => {
 
           return (
             <g key={commit.id}>
-              {/* Commit circle */}
+              {/* Commit circle - green if it's the current HEAD */}
               <circle
                 cx={pos.x}
                 cy={pos.y}
@@ -145,7 +150,7 @@ const VisualGraph: React.FC<VisualGraphProps> = ({ state }) => {
                 stroke="#c9d1d9"
                 strokeWidth="2"
               />
-              {/* Commit hash and message */}
+              {/* Commit hash and message snippet */}
               <text
                 x={pos.x + 20}
                 y={pos.y + 5}
@@ -156,7 +161,7 @@ const VisualGraph: React.FC<VisualGraphProps> = ({ state }) => {
                 {commit.id.substring(0, 7)} - {commit.message}
               </text>
 
-              {/* Local branch badge */}
+              {/* Local branch badge display */}
               {localBranchesAtCommit.map(([name], idx) => (
                 <g key={`local-label-${name}`}>
                   <rect
@@ -182,7 +187,7 @@ const VisualGraph: React.FC<VisualGraphProps> = ({ state }) => {
                 </g>
               ))}
 
-              {/* Remote branch badge */}
+              {/* Remote branch badge display (dashed border) */}
               {remoteBranchesAtCommit.map(([name], idx) => (
                 <g key={`remote-label-${name}`}>
                   <rect
