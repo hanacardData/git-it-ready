@@ -52,13 +52,48 @@ const VisualGraph: React.FC<VisualGraphProps> = ({ state }) => {
     });
 
     // Map lanes (X) and depth (Y) to coordinates
+    const laneOccupancy: Record<number, number[]> = {}; // laneIndex -> array of depths
+    const branchLaneMap: Record<string, number> = { main: 0 };
+
+    branchNames.forEach((branch) => {
+      if (branch === "main") {
+        laneOccupancy[0] = Object.entries(commitBranchMap)
+          .filter(([, b]) => b === "main")
+          .map(([id]) => commitDepth[id]);
+        return;
+      }
+
+      const branchCommits = Object.entries(commitBranchMap)
+        .filter(([, b]) => b === branch)
+        .map(([id]) => id);
+
+      if (branchCommits.length === 0) return;
+
+      const depths = branchCommits.map((id) => commitDepth[id]);
+      const minD = Math.min(...depths);
+      const maxD = Math.max(...depths);
+
+      // Find first available lane index
+      let lane = 1;
+      while (true) {
+        const occupied = laneOccupancy[lane] || [];
+        const hasOverlap = occupied.some((d) => d >= minD - 1 && d <= maxD + 1);
+        if (!hasOverlap) {
+          branchLaneMap[branch] = lane;
+          laneOccupancy[lane] = [...occupied, ...depths];
+          break;
+        }
+        lane++;
+      }
+    });
+
     commits.forEach((commit) => {
       const branch = commitBranchMap[commit.id] || "main";
-      const bIdx = branchNames.indexOf(branch);
+      const lane = branchLaneMap[branch] ?? 0;
       const depth = commitDepth[commit.id] ?? 0;
 
       commitPositions[commit.id] = {
-        x: 160 + (bIdx !== -1 ? bIdx : 0) * 200, // Horizontal spacing
+        x: 160 + lane * 200, // Horizontal spacing using packed lanes
         y: 120 + depth * 90, // Vertical spacing based on depth
       };
     });

@@ -358,7 +358,7 @@ export const useGitSimulator = () => {
 
       const newCommit: Commit = {
         id: newCommitId,
-        message: `GitHub Merge: '${source}' into ${target}`,
+        message: `Merge: '${source}' into ${target}`,
         parents: [targetCommitId, sourceCommitId],
         timestamp: Date.now(),
         author: "github-system",
@@ -428,6 +428,21 @@ export const useGitSimulator = () => {
     });
   }, []);
 
+  /**
+   * git branch -d [name]
+   * Deletes a branch.
+   */
+  const deleteBranch = useCallback((name: string) => {
+    setState((prev) => {
+      if (name === "main" || name === prev.head) return prev;
+      const { [name]: _, ...restBranches } = prev.branches;
+      return {
+        ...prev,
+        branches: restBranches,
+      };
+    });
+  }, []);
+
   return {
     state,
     add,
@@ -440,5 +455,6 @@ export const useGitSimulator = () => {
     mergeRemote,
     updateWorkingDirectory,
     syncBranch,
+    deleteBranch,
   };
 };

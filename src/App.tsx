@@ -25,6 +25,7 @@ function App() {
     mergeRemote,
     updateWorkingDirectory,
     syncBranch,
+    deleteBranch,
   } = useGitSimulator();
 
   // State for terminal command history and interactive feedback
@@ -224,6 +225,39 @@ function App() {
           ]);
         }
       }
+      // git branch -d [name] or git branch -D [name]
+      else if (
+        cmd.startsWith("git branch -d ") ||
+        cmd.startsWith("git branch -D ")
+      ) {
+        const branchName = parts[parts.length - 1];
+        if (branchName === "main") {
+          setTerminalOutput((prev) => [...prev, `error: cannot delete 'main'`]);
+        } else if (branchName === state.head) {
+          setTerminalOutput((prev) => [
+            ...prev,
+            `error: cannot delete the branch you are currently on.`,
+          ]);
+        } else if (state.branches[branchName]) {
+          deleteBranch(branchName);
+          setTerminalOutput((prev) => [
+            ...prev,
+            `Deleted branch ${branchName}`,
+          ]);
+        } else {
+          setTerminalOutput((prev) => [
+            ...prev,
+            `error: branch '${branchName}' not found.`,
+          ]);
+        }
+      }
+      // git branch (list)
+      else if (cmd === "git branch") {
+        const branches = Object.keys(state.branches).map((b) =>
+          b === state.head ? `* ${b}` : `  ${b}`,
+        );
+        setTerminalOutput((prev) => [...prev, ...branches]);
+      }
       // git status
       else if (cmd === "git status") {
         setTerminalOutput((prev) => [
@@ -241,7 +275,17 @@ function App() {
         setTerminalOutput((prev) => [...prev, `Unknown command: ${cmd}`]);
       }
     },
-    [state, add, commit, createBranch, checkout, merge, push, syncBranch],
+    [
+      state,
+      add,
+      commit,
+      createBranch,
+      checkout,
+      merge,
+      push,
+      syncBranch,
+      deleteBranch,
+    ],
   );
 
   return (
